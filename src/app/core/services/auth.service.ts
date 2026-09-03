@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { AuthResponse, LoginCredentials, RegisterCredentials, UserRole } from '../models/auth.model';
+import { AuthResponse, LoginCredentials, RegisterCredentials, User, UserRole } from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +36,16 @@ export class AuthService {
   }
 
   logout(): void {
-    const refreshToken = this.ge
+    const refreshToken = this.getRefreshToken();
+    if (refreshToken) {
+      this.http.post(`${this.apiUrl}/logout`, {refreshToken}).subscribe({
+        next: () => this.clearSession(),
+        error: () => this.clearSession()
+      });
+    } else {
+      this.clearSession();
+    }
+
   }
 
 
@@ -68,8 +77,18 @@ export class AuthService {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY); 
   }
 
-  getUser(): UserRole | null {
-    const user = 
+  getUser(): User | null {
+    const userStr = localStorage.getItem(this.USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;  
+  }
+
+  getRol() : UserRole | null {
+    const user = this.getUser();
+    return user ? user.role : null;
+  }
+
+  get isAuthenticated(): boolean {
+    return this.getAccessToken() !== null;
   }
 
 
