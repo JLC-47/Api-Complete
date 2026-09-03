@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, filter, Observable, take, tap } from 'rxjs';
 import { AuthResponse, LoginCredentials, RegisterCredentials, User, UserRole } from '../models/auth.model';
 
 @Injectable({
@@ -9,10 +9,12 @@ import { AuthResponse, LoginCredentials, RegisterCredentials, User, UserRole } f
 })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`
-
   private readonly ACCESS_TOKEN_KEY = 'access_token';
-  private readonly REFRESH_TOKEN_KEY = 'refresh_token'
-  private readonly USER_KEY = 'current_user'
+  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
+  private readonly USER_KEY = 'current_user';
+
+  private  isRefreshing = false;
+  private  refrshTokenSubjet = new BehaviorSubject<string | null>(null);
 
   constructor(private http: HttpClient) { }
 
@@ -89,6 +91,19 @@ export class AuthService {
 
   get isAuthenticated(): boolean {
     return this.getAccessToken() !== null;
+  }
+
+
+  refreshToken(): Observable<any> {
+    if (this.isRefreshing) {
+      return this.refrshTokenSubjet.pipe(
+        filter(token => token !== null),
+        take(1)
+      );
+    }
+
+    this.isRefreshing = true;
+
   }
 
 
